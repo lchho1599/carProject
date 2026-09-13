@@ -1,0 +1,91 @@
+# 공통 설정 — 환경별 값은 application-{profile}.yml 과 환경변수로 주입한다.
+spring:
+  application:
+    name: rentdb-backend
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Seoul
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      # 관리자 이미지 업로드 — 파일 5MB (ImageUploadService 에서도 검사)
+      max-file-size: 5MB
+      max-request-size: 6MB
+  session:
+    # 관리자 로그인 세션: DB 저장, 2시간 동안 요청이 없으면 만료
+    timeout: 2h
+    jdbc:
+      initialize-schema: never   # 테이블은 Flyway V2 가 만든다
+      cleanup-cron: "0 */30 * * * *"
+
+app:
+  site:
+    # 정식 사이트명·사업자 정보가 정해지면 환경변수로 교체한다 (현재 임시값)
+    name: ${SITE_NAME:렌트DB(가칭)}
+    phone: ${SITE_PHONE:1600-0000}
+    business-name: ${SITE_BUSINESS_NAME:(주)렌트DB(가칭)}
+    representative: ${SITE_REPRESENTATIVE:홍길동}
+    business-number: ${SITE_BUSINESS_NUMBER:000-00-00000}
+    address: ${SITE_ADDRESS:서울특별시 (임시 주소)}
+  lead:
+    # 같은 연락처로 이 시간(분) 안에 다시 신청하면 중복으로 차단
+    duplicate-window-minutes: 10
+    rate-limit:
+      # IP당 window-minutes 동안 허용하는 신청 횟수 (인스턴스 메모리 기준)
+      max-requests: 10
+      window-minutes: 10
+  notification:
+    # smtp: 실제 SMTP 발송 (로컬은 Mailpit) / log: 로그로만 출력
+    mail-type: ${MAIL_TYPE:smtp}
+    from: ${MAIL_FROM:no-reply@rentdb.local}
+    # 알림 메일의 관리자 상세 링크 도메인
+    admin-base-url: ${ADMIN_BASE_URL:http://localhost:5173}
+  security:
+    ip-hash-salt: ${IP_HASH_SALT:local-dev-salt}
+    # 다른 도메인(운영 프론트)에서 API를 부를 때 허용할 주소, 쉼표로 구분. 로컬은 Vite 프록시라 비워 둔다.
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+    # 관리자 세션 쿠키(RENTDB_SESSION)를 HTTPS 에서만 보낼지 — 로컬(http)은 false, 운영은 true
+    session-cookie-secure: false
+    login-rate-limit:
+      # IP당 window-minutes 동안 허용하는 로그인 시도 횟수 (비밀번호 대입 공격 방지)
+      max-requests: 10
+      window-minutes: 10
+  storage:
+    # local: 서버 폴더에 저장하고 /api/files/** 로 제공 (운영 Cloudflare R2 는 배포 단계에서 추가)
+    type: ${STORAGE_TYPE:local}
+    local-dir: ${STORAGE_LOCAL_DIR:./uploads}
+  admin:
+    # 관리자 계정이 하나도 없을 때만 이 값으로 첫 계정을 만든다 (.env 에 직접 설정)
+    initial-email: ${INITIAL_ADMIN_EMAIL:}
+    initial-password: ${INITIAL_ADMIN_PASSWORD:}
+    initial-name: ${INITIAL_ADMIN_NAME:관리자}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

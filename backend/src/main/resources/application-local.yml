@@ -1,0 +1,26 @@
+# 로컬 개발 설정
+# 루트의 .env 파일(docker compose와 공유)을 읽어 DB 접속 정보를 가져온다.
+# 프로젝트 DB는 docker compose의 PostgreSQL(5433)이다. 설치판 PostgreSQL(5432)과 혼동하지 말 것.
+spring:
+  config:
+    import: optional:file:../.env[.properties]
+  datasource:
+    url: jdbc:postgresql://localhost:${DB_PORT:5433}/${POSTGRES_DB:rentdb}
+    username: ${POSTGRES_USER:rentdb}
+    password: ${POSTGRES_PASSWORD:rentdb_local}
+  flyway:
+    # 로컬만 샘플 데이터(db/seed) 추가 실행 — 운영(prod)은 db/migration 만 사용
+    locations: classpath:db/migration,classpath:db/seed
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+    host: localhost
+    port: ${MAILPIT_SMTP_PORT:1025}
+
+logging:
+  level:
+    com.rentdb: debug
+    org.hibernate.SQL: debug
