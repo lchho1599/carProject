@@ -1,0 +1,18 @@
+# 환경변수 (비밀값) — 예시 파일만 커밋
+.env
+.env.*
+!.env.example
+
+# 로그 / 임시
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# 에디터
+.idea/
+.vscode/
+*.iml
+
+# 로컬 업로드 파일
+uploads/
